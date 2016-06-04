@@ -1,0 +1,3 @@
+[submodule "rtorrent-python"]
+	path = rtorrent-python
+	url = https://github.com/cjlucas/rtorrent-python.git
