@@ -76,7 +76,7 @@ def cleanup(opts = None):
     if not opts:
         opts = {}
     df_out = subprocess.check_output(conf.ssh_command +
-                                     ['df', '-m', '-P', conf.remote_folder])
+                                     [conf.host, 'df', '-m', '-P', conf.remote_folder])
     df = [x.split() for x in df_out.splitlines()]
     print(df)
     print(df[0].index(b'Available'))
@@ -85,7 +85,7 @@ def cleanup(opts = None):
     if free > conf.free_mb:
         return
     files_output = subprocess.check_output(conf.ssh_command +
-                                           ['find', conf.remote_folder, '-type', 'f',
+                                           [conf.host, 'find', conf.remote_folder, '-type', 'f',
                                            '-printf', '"%T@\\t%s\\t%p\\0"'])
     files = list(filter(lambda x: len(x) == 3, [x.split(b'\t', maxsplit=2) for x in files_output.split(b'\0')]))
     for f in files:
@@ -118,7 +118,7 @@ def cleanup(opts = None):
         log.info('will_delete %s' % ' '.join(to_delete))
         if not args.test:
             subprocess.call(conf.ssh_command +
-                            ['rm', '-f'] + to_delete)
+                            [conf.host, 'rm', '-f'] + to_delete)
 
 def check_files():
     rv = {'all_files': []}
