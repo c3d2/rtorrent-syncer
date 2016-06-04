@@ -13,7 +13,10 @@ import os.path
 import argparse
 import queue
 from pprint import pprint
-from http.client import RemoteDisconnected
+try:
+    from http.client import RemoteDisconnected as RemoteError
+except ImportError:
+    from http.client import BadStatusLine as RemoteError
 
 # imp.find_module('rtorrent.conf')
 conf = imp.load_source('conf', 'rtorrent.conf')
@@ -62,7 +65,7 @@ def rpc_call(key, *args):
     for i in range(3):
         try:
             return obj.__call__(*args)
-        except RemoteDisconnected as e:
+        except RemoteError as e:
             if i == 2:
                 raise
 
@@ -72,7 +75,7 @@ from operator import itemgetter, attrgetter, methodcaller
 def cleanup(opts = None):
     if not opts:
         opts = {}
-    df_out = subprocess.check_output(SSH_COMMAND +
+    df_out = subprocess.check_output(conf.ssh_command +
                                      ['df', '-m', '-P', conf.remote_folder])
     df = [x.split() for x in df_out.splitlines()]
     print(df)
@@ -81,7 +84,7 @@ def cleanup(opts = None):
 
     if free > conf.free_mb:
         return
-    files_output = subprocess.check_output(SSH_COMMAND +
+    files_output = subprocess.check_output(conf.ssh_command +
                                            ['find', conf.remote_folder, '-type', 'f',
                                            '-printf', '"%T@\\t%s\\t%p\\0"'])
     files = list(filter(lambda x: len(x) == 3, [x.split(b'\t', maxsplit=2) for x in files_output.split(b'\0')]))
@@ -114,7 +117,7 @@ def cleanup(opts = None):
     if len(to_delete):
         log.info('will_delete %s' % ' '.join(to_delete))
         if not args.test:
-            subprocess.call(SSH_COMMAND +
+            subprocess.call(conf.ssh_command +
                             ['rm', '-f'] + to_delete)
 
 def check_files():
@@ -155,7 +158,7 @@ def check_files():
                     if not args.test:
                         os.makedirs(pardir)
                 if not args.test:
-                    job = Job(['rsync', '-e', ' '.join(SSH_COMMAND), '-av',
+                    job = Job(['rsync', '-e', ' '.join(conf.ssh_command), '-av',
                                "%s:'%s'" % (conf.rsync_host, meta['get_frozen_path']),
                                check_path])
                     job.hash = torrent.info_hash
