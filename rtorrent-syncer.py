@@ -186,8 +186,11 @@ def run_loop():
         workers.append(w)
     while True:
         started = time.time()
-        state = check_files()
-        cleanup(state)
+        try:
+            state = check_files()
+            cleanup(state)
+        except Exception as e:
+            log.error('Error running loop: %s' % e)
 
         print(conf.check_interval - (time.time() - started))
         time.sleep(max(conf.check_interval - (time.time() - started), 0))
